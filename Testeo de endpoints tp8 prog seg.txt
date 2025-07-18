@@ -1,0 +1,186 @@
+Testeo de endpoints tp8 prog. seg. :
+
+(con los @PreAuthorize comentados)
+
+* Comentar también (en SecurityConfig): (*importante*)
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
+        return httpSecurity
+                .csrf(csrf -> csrf.disable())
+                .httpBasic(Customizer.withDefaults())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // .authorizeHttpRequests(auth -> auth
+                //         .requestMatchers("/auth/login").permitAll() // <-- Permite login sin token
+                //         .anyRequest().authenticated())
+                // .addFilterBefore(new JwtTokenValidator(jwtUtils), BasicAuthenticationFilter.class)
+                .build();
+    }
+
+1)Crear permisos: 
+
+POST localhost:8080/api/permissions
+
+{
+  "permissionName": "READ"
+}
+
+
+{
+  "permissionName": "CREATE"
+}
+
+-------------------------------------
+
+2) Crear roles:
+
+POST http://localhost:8080/api/roles
+
+{
+  "role": "ADMIN",
+  "permissionsList": [
+    { "id": 1 },
+    { "id": 2 }
+  ]
+}
+
+{
+  "role": "ALUMNO",
+  "permissionsList": [
+    { "id": 1 }
+  ]
+}
+
+
+-------------------------------------
+
+3) Crear usuarios:
+
+POST http://localhost:8080/api/users
+
+{
+  "username": "centro8",
+  "password": "1234",
+  "enabled": true,
+  "accountNotExpired": true,
+  "accountNotLocked": true,
+  "credentialNotExpired": true,
+  "rolesList": [
+    {
+      "id": 1
+    }
+  ]
+}
+
+-------------------------------------
+
+(descomentando los @PreAuthorize )
+
+4) crear usuario "seguidor":
+
+POST http://localhost:8080/api/users
+
+Auth: 	user: centro8
+	contraseña: 1234
+
+Body:
+
+{
+  "username": "seguidor",
+  "password": "1234",
+  "enabled": true,
+  "accountNotExpired": true,
+  "accountNotLocked": true,
+  "credentialNotExpired": true,
+  "rolesList": [
+    {
+      "id": 2
+    }
+  ]
+}
+
+5) Sólo el usuario con rol ADMIN puede acceder:
+
+GET http://localhost:8080/holaseg
+
+Auth: 	user: centro8
+	contraseña: 1234
+
+6) Cualquiera puede acceder
+
+GET http://localhost:8080/holanoseg
+
+7) Listar todos los permisos, luego un solo permiso:
+
+select * from permissions;
+select * from permissions where permission_name like 'create';
+
+8) Listar todos los roles, luego un solo rol:
+select * from roles;
+select * from roles where role like 'user';
+
+9) Listar todos los usuarios, luego un solo usuario:
+select * from users;
+
+10) Crear un tercer usuario (`seguidor2` con rol `READ`):
+
+POST http://localhost:8080/api/users
+
+Auth: 	user: centro8
+	contraseña: 1234
+
+Body:
+
+{
+  "username": "seguidor2",
+  "password": "1234",
+  "enabled": true,
+  "accountNotExpired": true,
+  "accountNotLocked": true,
+  "credentialNotExpired": true,
+  "rolesList": [
+    {
+      "id": 2
+    }
+  ]
+}
+
+11) Crear el rol `GUEST`:
+
+POST http://localhost:8080/api/roles
+
+Auth: 	user: centro8
+	contraseña: 1234
+
+Body:
+
+{
+  "role": "GUEST",
+  "permissionsList": [
+    { "id": 1 }
+  ]
+}
+
+
+12) Crear un cuarto usuario (`invitado` con rol `GUEST`):
+
+POST http://localhost:8080/api/users
+
+Auth: 	user: centro8
+	contraseña: 1234
+
+Body:
+
+{
+  "username": "invitado",
+  "password": "1234",
+  "enabled": true,
+  "accountNotExpired": true,
+  "accountNotLocked": true,
+  "credentialNotExpired": true,
+  "rolesList": [
+    {
+      "id": 3
+    }
+  ]
+}
